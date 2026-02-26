@@ -1,0 +1,185 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Товары — ООО Обувь{% endblock %}
+{% block header_title %}Товары{% endblock %}
+
+{% block nav %}
+<div class="nav-bar">
+    <a href="{% url 'product_list' %}">Товары</a>
+    {% if user_role == 'manager' or user_role == 'admin' %}
+        <a href="{% url 'order_list' %}">Заказы</a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+    .controls input,
+    .controls select {
+        padding: 7px 10px;
+        font-size: 14px;
+        font-family: 'Times New Roman', serif;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .controls input[type="text"] { width: 300px; }
+    .product-card {
+        display: flex;
+        border: 1px solid #ccc;
+        margin-bottom: 8px;
+        padding: 10px;
+        align-items: stretch;
+        border-radius: 4px;
+    }
+    .product-card img {
+        width: 150px;
+        height: 100px;
+        object-fit: cover;
+        border: 1px solid #eee;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    .product-info {
+        flex: 1;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    .product-info strong { font-size: 15px; }
+    .product-discount-box {
+        width: 130px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+    .product-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        justify-content: center;
+        margin-left: 10px;
+    }
+    .price-old {
+        text-decoration: line-through;
+        color: red;
+    }
+    .price-new {
+        color: #000;
+        font-weight: bold;
+    }
+    .bg-discount { background-color: #2E8B57 !important; }
+    .bg-out-of-stock { background-color: #ADD8E6 !important; }
+    .add-btn-row { margin-bottom: 15px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% if user_role == 'manager' or user_role == 'admin' %}
+<div class="controls">
+    <input type="text" id="search" placeholder="Поиск..." value="{{ search_query }}">
+    <select id="supplier">
+        <option value="">Все поставщики</option>
+        {% for s in suppliers %}
+            <option value="{{ s.id }}" {% if supplier_filter == s.id|stringformat:"d" %}selected{% endif %}>
+                {{ s.supplier_name }}
+            </option>
+        {% endfor %}
+    </select>
+    <select id="sort">
+        <option value="">Без сортировки</option>
+        <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Кол-во на складе ↑</option>
+        <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>Кол-во на складе ↓</option>
+    </select>
+</div>
+{% endif %}
+
+{% if user_role == 'admin' %}
+<div class="add-btn-row">
+    <a href="{% url 'product_add' %}" class="btn btn-accent">+ Добавить товар</a>
+</div>
+{% endif %}
+
+{% for product in products %}
+<div class="product-card
+    {% if product.discount > 15 %}bg-discount{% endif %}
+    {% if product.quantity_in_stock == 0 %}bg-out-of-stock{% endif %}
+">
+    {% if product.photo %}
+        <img src="{{ product.photo.url }}" alt="{{ product.product_name }}">
+    {% else %}
+        <img src="{% static 'images/picture.png' %}" alt="Нет фото">
+    {% endif %}
+
+    <div class="product-info">
+        <strong>{{ product.category.category_name }} | {{ product.product_name }}</strong><br>
+        Описание товара: {{ product.description }}<br>
+        Производитель: {{ product.manufacturer.manufacturer_name }}<br>
+        Поставщик: {{ product.supplier.supplier_name }}<br>
+        Цена:
+        {% if product.discount > 0 %}
+            <span class="price-old">{{ product.price }} ₽</span>
+            <span class="price-new">{{ product.discounted_price }} ₽</span>
+        {% else %}
+            {{ product.price }} ₽
+        {% endif %}<br>
+        Единица измерения: {{ product.unit.unit_name }}<br>
+        Количество на складе: {{ product.quantity_in_stock }}
+    </div>
+
+    <div class="product-discount-box">
+        {% if product.discount > 0 %}
+            Скидка {{ product.discount }}%
+        {% endif %}
+    </div>
+
+    {% if user_role == 'admin' %}
+    <div class="product-actions">
+        <a href="{% url 'product_edit' product.pk %}" class="btn btn-accent">Ред.</a>
+        <form method="post" action="{% url 'product_delete' product.pk %}"
+              onsubmit="return confirm('Вы уверены, что хотите удалить товар «{{ product.product_name }}»?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Удл.</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% empty %}
+<p>Товары не найдены.</p>
+{% endfor %}
+
+{% if user_role == 'manager' or user_role == 'admin' %}
+<script>
+    // Фильтрация/поиск/сортировка в реальном времени
+    let debounceTimer;
+    function applyFilters() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const search = document.getElementById('search').value;
+            const supplier = document.getElementById('supplier').value;
+            const sort = document.getElementById('sort').value;
+            const params = new URLSearchParams();
+            if (search) params.set('search', search);
+            if (supplier) params.set('supplier', supplier);
+            if (sort) params.set('sort', sort);
+            window.location.href = '{% url "product_list" %}?' + params.toString();
+        }, 400);
+    }
+
+    document.getElementById('search').addEventListener('input', applyFilters);
+    document.getElementById('supplier').addEventListener('change', applyFilters);
+    document.getElementById('sort').addEventListener('change', applyFilters);
+</script>
+{% endif %}
+
+{% endblock %}

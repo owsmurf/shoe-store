@@ -1,0 +1,88 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}{% if editing %}Редактирование{% else %}Добавление{% endif %} товара — ООО Обувь{% endblock %}
+{% block header_title %}{% if editing %}Редактирование товара{% else %}Добавление товара{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container { max-width: 650px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 4px;
+        font-size: 14px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 8px 10px;
+        font-size: 14px;
+        font-family: 'Times New Roman', serif;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .form-group textarea { resize: vertical; }
+    .form-group .errors { color: #dc3545; font-size: 13px; margin-top: 3px; }
+    .form-group .helptext { color: #666; font-size: 12px; }
+    .photo-preview {
+        max-width: 300px;
+        max-height: 200px;
+        border: 1px solid #ccc;
+        margin-top: 5px;
+    }
+    .readonly-field {
+        background: #eee;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    .form-buttons { margin-top: 20px; display: flex; gap: 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'product_list' %}" class="btn btn-white" style="margin-bottom: 15px;">← Назад к списку</a>
+
+<div class="form-container">
+    {% if editing %}
+    <div class="form-group">
+        <label>ID товара</label>
+        <div class="readonly-field">{{ product.pk }}</div>
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% for field in form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+                <div class="errors">
+                    {% for error in field.errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        {% if product and product.photo %}
+        <div class="form-group">
+            <label>Текущее фото:</label>
+            <img src="{{ product.photo.url }}" alt="Фото" class="photo-preview">
+        </div>
+        {% endif %}
+
+        <div class="form-buttons">
+            <button type="submit" class="btn btn-accent">Сохранить</button>
+            <a href="{% url 'product_list' %}" class="btn btn-white">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

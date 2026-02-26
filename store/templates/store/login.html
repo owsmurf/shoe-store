@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Авторизация — ООО Обувь</title>
+    <link rel="icon" href="{% static 'Icon.ico' %}" type="image/x-icon">
+    <style>
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'Times New Roman', Times, serif;
+        }
+        body {
+            background: #FFFFFF;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+        }
+        .login-box {
+            background: #7FFF00;
+            padding: 40px 35px;
+            border-radius: 10px;
+            width: 400px;
+            text-align: center;
+        }
+        .login-box img {
+            max-width: 180px;
+            margin-bottom: 15px;
+        }
+        .login-box h2 {
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+        .login-box input {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            font-size: 16px;
+            font-family: 'Times New Roman', serif;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .btn {
+            padding: 10px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Times New Roman', serif;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary { background: #00FA9A; color: #000; }
+        .btn-primary:hover { background: #00d884; }
+        .btn-guest { background: #fff; color: #000; border: 1px solid #999; }
+        .btn-guest:hover { background: #f0f0f0; }
+        .error-msg { color: #dc3545; margin-bottom: 12px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <img src="{% static 'Icon.png' %}" alt="Логотип ООО Обувь">
+        <h2>Авторизация</h2>
+
+        {% if messages %}
+            {% for msg in messages %}
+                <p class="error-msg">{{ msg }}</p>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="text" name="username" placeholder="Логин" required autofocus>
+            <input type="password" name="password" placeholder="Пароль" required>
+            <div>
+                <button type="submit" class="btn btn-primary">Войти</button>
+            </div>
+        </form>
+        <div style="margin-top: 15px;">
+            <a href="{% url 'product_list' %}" class="btn btn-guest">Войти как гость</a>
+        </div>
+    </div>
+</body>
+</html>
